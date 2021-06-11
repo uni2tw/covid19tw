@@ -105,6 +105,7 @@
                 }
             },
             mounted: function () {
+                this.initChart();
                 this.getCountry();
             },
             methods: {
@@ -168,7 +169,7 @@
                     }
                     this.renderChart();
                 },
-                renderChart: function () {
+                initChart: function () {
                     let chartData = {
                         title: {
                             text: ""
@@ -196,28 +197,39 @@
                             dataPoints: []
                         },]
                     };
-                    chartData.data[0].dataPoints = [];
-                    chartData.data[1].dataPoints = [];
 
+                    window.chart = new CanvasJS.Chart("chartContainer", chartData);
+                },
+                renderChart: function () {
+                    window.chart.options.data[0].dataPoints = [];
+                    window.chart.options.data[1].dataPoints = [];
                     let maxNumber = -1;
                     for (i in this.items) {
                         let item = this.items[i];
                         if (maxNumber < item.number) {
                             maxNumber = item.number;
                         }
-                        chartData.data[0].dataPoints.push({ x: new Date(moment(item.date)), y: item.number });
-                        chartData.data[1].dataPoints.push({ x: new Date(moment(item.date)), y: item.avg7 });
+                        window.chart.options.data[0].dataPoints.push({ x: new Date(moment(item.date)), y: item.number });
+                        window.chart.options.data[1].dataPoints.push({ x: new Date(moment(item.date)), y: item.avg7 });
                     }
                     if (maxNumber < 100) {
-                        chartData.axisY.maximum = 100;
+                        window.chart.options.axisY.maximum = 100;
+                    } else if (maxNumber < 500) {
+                        window.chart.options.axisY.maximum = 500;
                     }
+                    else if (maxNumber < 1000) {
+                        window.chart.options.axisY.maximum = 1000;
+                    } else {
+                        window.chart.options.axisY.maximum = Math.ceil(maxNumber / 1000) * 1000;
+                    }
+
 
                     let maxIndex = -1;
                     let minIndex = -1;
                     let maxValue = -1;
                     let minValue = 1000000;
-                    for (i in chartData.data[0].dataPoints) {
-                        let pt = chartData.data[0].dataPoints[i];
+                    for (i in window.chart.options.data[0].dataPoints) {
+                        let pt = window.chart.options.data[0].dataPoints[i];
                         if (maxValue < pt.y) {
                             maxValue = pt.y;
                             maxIndex = i;
@@ -228,33 +240,33 @@
                         }
                     }
                     if (minIndex != -1) {
-                        chartData.data[0].dataPoints[minIndex].indexLabel = "低";
-                        chartData.data[0].dataPoints[minIndex].markerColor = "DarkSlateGrey";
-                        chartData.data[0].dataPoints[minIndex].markerType = "cross";
+                        window.chart.options.data[0].dataPoints[minIndex].indexLabel = "低";
+                        window.chart.options.data[0].dataPoints[minIndex].markerColor = "DarkSlateGrey";
+                        window.chart.options.data[0].dataPoints[minIndex].markerType = "cross";
                     }
                     if (maxIndex != -1) {
-                        chartData.data[0].dataPoints[maxIndex].indexLabel = "高";
-                        chartData.data[0].dataPoints[maxIndex].markerColor = "red";
-                        chartData.data[0].dataPoints[maxIndex].markerType = "triangle";
+                        window.chart.options.data[0].dataPoints[maxIndex].indexLabel = "高";
+                        window.chart.options.data[0].dataPoints[maxIndex].markerColor = "red";
+                        window.chart.options.data[0].dataPoints[maxIndex].markerType = "triangle";
                     }
-                    window.chart = new CanvasJS.Chart("chartContainer", chartData);
-                    chart.render();
+
+                    window.chart.render();
                 },
-                pickNextCity: function() {
-                    let curIdx = this.cities.findIndex(t=>t == this.theCity);
+                pickNextCity: function () {
+                    let curIdx = this.cities.findIndex(t => t == this.theCity);
                     let nextIdx = curIdx + 1;
                     if (nextIdx == this.cities.length) {
                         nextIdx = 0;
                     }
-                    this.theCity = this.cities[nextIdx];                    
+                    this.theCity = this.cities[nextIdx];
                 },
-                pickPrevCity: function() {
-                    let curIdx = this.cities.findIndex(t=>t == this.theCity);
+                pickPrevCity: function () {
+                    let curIdx = this.cities.findIndex(t => t == this.theCity);
                     let nextIdx = curIdx - 1;
                     if (nextIdx == -1) {
                         nextIdx = this.cities.length - 1;
                     }
-                    this.theCity = this.cities[nextIdx];                    
+                    this.theCity = this.cities[nextIdx];
                 }
             }
         });
@@ -293,7 +305,7 @@
                     /* left swipe */
                     app.pickNextCity();
                 } else {
-                    /* leftright swipe */                    
+                    /* leftright swipe */
                     app.pickPrevCity();
                 }
             } else {
