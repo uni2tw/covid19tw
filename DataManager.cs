@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Autofac.Core;
 using Microsoft.Extensions.Caching.Memory;
+using Hangfire;
 
 namespace Covid19TW
 {
@@ -28,16 +30,25 @@ namespace Covid19TW
             CountryCacheData countryCacheData = IoC.GetCache().Get<CountryCacheData>(_COUNTRY_CACHE_KEY);
             if (countryCacheData == null)
             {
-                countryCacheData = GetCountryDataNoCache();                
+                countryCacheData = GetCountryDataNoCache();
                 IoC.GetCache().Set(_COUNTRY_CACHE_KEY, countryCacheData);
             }
-            updatedTime = countryCacheData.UpdatedTime.ToString("yyyy/MM/dd");                        
+            updatedTime = countryCacheData.UpdatedTime.ToString("yyyy/MM/dd");
             return countryCacheData.Country;
         }
-        public void SetCountryDataNoCache() {
-            CountryCacheData countryCacheData = GetCountryDataNoCache();                
-            IoC.GetCache().Set(_COUNTRY_CACHE_KEY, countryCacheData);
-            Console.WriteLine("SetCountryDataNoCache at " + DateTime.Now.ToString("yyyy/MM/dd HH:mm"));  
+
+        [AutomaticRetry(Attempts = 5, DelaysInSeconds = new int[] { 600 })]
+        public void SetCountryDataNoCache()
+        {
+            CountryCacheData oldData = IoC.GetCache().Get<CountryCacheData>(_COUNTRY_CACHE_KEY);
+            CountryCacheData countryCacheData = GetCountryDataNoCache();
+            if (oldData == null || oldData.UpdatedTime != countryCacheData.UpdatedTime)
+            {
+                Console.WriteLine("Reset countryDataNoCache to {0} at {1}",
+                    countryCacheData.UpdatedTime.ToString("yyyy/MM/dd"),
+                    DateTime.Now.ToString("yyyy/MM/dd HH:mm"));
+                IoC.GetCache().Set(_COUNTRY_CACHE_KEY, countryCacheData);
+            }
         }
 
         public CountryCacheData GetCountryDataNoCache()

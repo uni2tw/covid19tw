@@ -104,6 +104,7 @@
                     immediate: true
                 }
             },
+
             mounted: function () {
                 this.initChart();
                 this.getCountry();
@@ -167,7 +168,9 @@
                             }
                         }
                     }
-                    this.renderChart();
+                    window.setTimeout(function() {
+                        app.renderChart();
+                    },100);                    
                 },
                 initChart: function () {
                     let chartData = {
@@ -313,12 +316,23 @@
                     /* up swipe */
                 } else {
                     /* down swipe */
+                    var doc = document.documentElement;
+                    var top = (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0);
+                    if (top == 0) {
+                        //pull to refresh
+                        window.setTimeout(function() {
+                            window.location.reload();
+                        },500);
+                        
+                    }
                 }
             }
             /* reset values */
             xDown = null;
             yDown = null;
         };
+
+
     </script>
 </body>
 
