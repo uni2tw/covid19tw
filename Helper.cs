@@ -10,7 +10,7 @@ namespace Covid19TW
         private static string _rootPath;
 
         public static string MapPath(string relPath)
-        {
+        {            
             if (_rootPath == null)
             {
                 _rootPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) +

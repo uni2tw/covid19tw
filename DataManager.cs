@@ -42,7 +42,8 @@ namespace Covid19TW
         {
             CountryCacheData oldData = IoC.GetCache().Get<CountryCacheData>(_COUNTRY_CACHE_KEY);
             CountryCacheData countryCacheData = GetCountryDataNoCache();
-            if (oldData == null || oldData.UpdatedTime != countryCacheData.UpdatedTime)
+            if (oldData == null || oldData.UpdatedTime != countryCacheData.UpdatedTime 
+                || oldData.Country.Total != countryCacheData.Country.Total)
             {
                 Console.WriteLine("Reset countryDataNoCache to {0} at {1}",
                     countryCacheData.UpdatedTime.ToString("yyyy/MM/dd"),
@@ -99,7 +100,7 @@ namespace Covid19TW
                     country.Total += infectedNumber;
                     city.Total += infectedNumber;
                     town.Total += infectedNumber;
-                    DateTime infectedTime = DateTime.ParseExact(infected.個案研判日, "yyyyMMdd", null);
+                    DateTime infectedTime = DateTime.ParseExact(infected.個案研判日, "yyyy/MM/dd", null);
                     string date = infectedTime.ToString("yyyy-MM-dd");
                     if (infectedTime > data.UpdatedTime)
                     {
@@ -143,9 +144,10 @@ namespace Covid19TW
                     }
                     townDailyNumber.Number += infectedNumber;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    throw new Exception("發生錯誤. city=" + infected.縣市 + ", town=" + infected.鄉鎮 + ", date=" + infected.個案研判日);
+                    throw new Exception("發生錯誤. city=" + infected.縣市 + ", town=" + infected.鄉鎮 + ", date=" + infected.個案研判日 
+                    + " infected=" + Newtonsoft.Json.JsonConvert.SerializeObject(infected) + ", ex=" + ex.ToString());
                 }
             }
 
@@ -250,7 +252,7 @@ namespace Covid19TW
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("ERROR: " + ex);
+                    Console.WriteLine("ERROR(GetRawData): " + ex);
                     throw;
                 }
             }

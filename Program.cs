@@ -47,7 +47,7 @@ namespace Covid19TW
 
             Hangfire.RecurringJob.AddOrUpdate("dailyData",
                                 () => IoC.Get<IDataManager>().SetCountryDataNoCache(), 
-                                "0 0/30 7,8,9 ? ? ?", TimeZoneInfo.Local);
+                                "0 0 7-12 ? ? ?", TimeZoneInfo.Local);            
 
             if (app.Environment.IsDevelopment())
             {
@@ -68,12 +68,16 @@ namespace Covid19TW
 
             app.MapGet("/info", async context =>
             {
+                //BackgroundJob.Enqueue(() => Console.WriteLine("hello world."));
+                System.Diagnostics.FileVersionInfo fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(
+                    System.Reflection.Assembly.GetEntryAssembly().Location);
+                string version = fvi.FileVersion;                    
                 IDataManager dataManager = IoC.Get<IDataManager>();
                 var country = dataManager.GetCountry(out string updatedTime);
                 await context.Response.WriteAsJsonAsync(new
                 {
                     assets = Helper.MapPath("assets"),
-                    aaa = IoC.GetCache().Get("aaa")
+                    version = version                    
                 });
             });
             //MapPath
@@ -101,19 +105,7 @@ namespace Covid19TW
                 RequestPath = new PathString("/html"),
                 ServeUnknownFileTypes = true
             });
-
-            ICacheEntry entry = IoC.GetCache().CreateEntry("aaa");
-            var opt = new MemoryCacheEntryOptions();
-            opt.SetAbsoluteExpiration(DateTime.Now.AddMinutes(1));
-
-            opt.RegisterPostEvictionCallback(delegate (object key, object value, EvictionReason reason, object state)
-            {
-
-
-                Console.WriteLine("Cache " + key + " was expired, the value is " + entry.Value + ", state = " + state.ToString());
-            });
-            IoC.GetCache().Set("aaa", "456", opt);
-
+                        
             app.Run();
         }
     }
